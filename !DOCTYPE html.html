@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦎 Chameleon Online Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----------------- General UI ----------------- */
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #0c0c0c;
+            color: #00ff99;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        
+        h1, h2 { 
+            margin: 0 0 10px; 
+            text-shadow: 0 0 12px #00ff99; 
+        }
+        
+        #gameContainer {
+            background: #1e1e1e;
+            border: 2px solid #00ff99;
+            border-radius: 16px;
+            padding: 15px;
+            width: 95%;
+            max-width: 700px;
+            box-shadow: 0 0 40px rgba(0, 255, 150, 0.3);
+            text-align: center;
+            transition: opacity 0.6s ease;
+            margin: 10px 0;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* ---------------- Inputs & Buttons ---------------- */
+        input, button {
+            margin: 5px;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+        
+        input { 
+            width: 70%; 
+            background: #2a2a2a;
+            color: #00ff99;
+            border: 1px solid #00cc77;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #00ff99;
+            box-shadow: 0 0 8px rgba(0, 255, 150, 0.5);
+        }
+        
+        input:disabled { 
+            background: #555; 
+            color: #888;
+        }
+        
+        button { 
+            background: #00ff99; 
+            color: #000; 
+            cursor: pointer; 
+            transition: 0.3s;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover { 
+            background: #00cc77; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 255, 150, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled { 
+            background: #555; 
+            color: #888; 
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #leaveLobbyBtn {
+            background: #ff4444;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        #leaveLobbyBtn:hover {
+            background: #cc2222;
+        }
+
+        /* Button container for side-by-side buttons */
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .button-container button {
+            flex: 1;
+            margin: 0;
+        }
+
+        /* ----------------- Lobby, Game & Win Screens ----------------- */
+        #lobbyBox, #gameScreen, #winScreen, #chameleonGuessScreen, #oneMoreRoundContainer {
+            transition: all 0.6s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            display: none;
+            margin-top: 20px;
+            background: #111;
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #00ff99;
+            max-height: 60vh;
+        }
+        
+        #lobbyBox.show, #gameScreen.show, #winScreen.show, #chameleonGuessScreen.show, #oneMoreRoundContainer.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .player {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border-left: 3px solid #00ff99;
+        }
+        
+        .player.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        #waitingMsg {
+            color: #ccc;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        /* Win Screen Specifics */
+        #winTitle { 
+            color: #ffd166; 
+            font-size: 2em; 
+        }
+        
+        #winMessage { 
+            font-size: 1.1em; 
+            line-height: 1.6; 
+            margin: 15px 0; 
+        }
+        
+        #winMessage strong { 
+            color: #fff; 
+        }
+
+        /* ----------------- Reveal & Word List Graphics ----------------- */
+        .reveal-message {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: revealAnim 0.5s forwards;
+            margin: 4px 0;
+            padding: 8px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            border-left: 2px solid #00ff99;
+        }
+        
+        @keyframes revealAnim {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .blur-role { 
+            filter: blur(10px); 
+        }
+        
+        .role-name { 
+            transition: filter 0.3s ease; 
+            display: inline-block;
+        } 
+
+        .secret-wrapper {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px dashed #00ff99;
+            border-radius: 8px;
+            background: #1a1a1a;
+        }
+        
+        .word-list-graphic {
+            margin-top: 15px;
+            border: 1px solid #ff4444;
+            border-radius: 8px;
+            text-align: left;
+            background: #221a1a;
+        }
+        
+        .word-list-header {
+            background: #ff4444;
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            border-radius: 6px 6px 0 0;
+            text-shadow: 0 0 5px #000;
+            letter-spacing: 1px;
+        }
+        
+        .word-list-content {
+            padding: 12px;
+            font-size: 14px;
+            color: #ffd166;
+            line-height: 1.6;
+            column-count: 3;
+            column-gap: 10px;
+        }
+        
+        .word-list-content div {
+            break-inside: avoid; 
+            padding: 2px 0;
+        }
+
+        /* ----------------- Particles ----------------- */
+        canvas#particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* ----------------- Loading Animations ----------------- */
+        .loading-dots {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 20px;
+        }
+
+        .loading-dots div {
+            position: absolute;
+            top: 0;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #00ff99;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+
+        .loading-dots div:nth-child(1) {
+            left: 8px;
+            animation: loading-dots1 0.6s infinite;
+        }
+
+        .loading-dots div:nth-child(2) {
+            left: 8px;
+            animation: loading-dots2 0.6s infinite;
+        }
+
+        .loading-dots div:nth-child(3) {
+            left: 32px;
+            animation: loading-dots2 0.6s infinite;
+        }
+
+        .loading-dots div:nth-child(4) {
+            left: 56px;
+            animation: loading-dots3 0.6s infinite;
+        }
+
+        @keyframes loading-dots1 {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes loading-dots3 {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+
+        @keyframes loading-dots2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(24px, 0); }
+        }
+
+        /* Pulse animation for game elements */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* ----------------- Responsive Adjustments ----------------- */
+        @media (max-width: 600px) {
+            #gameContainer {
+                padding: 10px;
+                width: 98%;
+                max-height: 95vh;
+            }
+            
+            input, button {
+                width: 100%;
+                margin: 5px 0;
+                box-sizing: border-box;
+            }
+            
+            .word-list-content {
+                column-count: 2;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            h2 {
+                font-size: 1.3em;
+            }
+            
+            .button-container {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .word-list-content {
+                column-count: 1;
+            }
+            
+            #gameContainer {
+                padding: 8px;
+            }
+        }
+
+        /* ----------------- Game Status Indicators ----------------- */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background-color: #00ff99;
+            box-shadow: 0 0 8px #00ff99;
+        }
+        
+        .status-offline {
+            background-color: #ff4444;
+        }
+        
+        .status-waiting {
+            background-color: #ffd166;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* ----------------- Enhanced UI Elements ----------------- */
+        .card {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .highlight {
+            color: #ffd166;
+            font-weight: bold;
+        }
+        
+        .chameleon-icon {
+            display: inline-block;
+            margin: 0 5px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .game-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .game-title i {
+            color: #00ff99;
+            font-size: 1.5em;
+        }
+        
+        /* Vote buttons styling */
+        .vote-button {
+            background: linear-gradient(135deg, #00ff99, #00cc77);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 150px;
+        }
+        
+        .vote-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 255, 150, 0.3);
+        }
+        
+        .vote-button:active {
+            transform: translateY(0);
+        }
+        
+        .vote-count {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+        
+        /* Progress bar for loading states */
+        .progress-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff99, #00cc77);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Notification toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a1a;
+            color: #00ff99;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid #00ff99;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        /* Role badges */
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .role-citizen {
+            background: rgba(0, 255, 150, 0.2);
+            color: #00ff99;
+            border: 1px solid #00ff99;
+        }
+        
+        .role-chameleon {
+            background: rgba(255, 209, 102, 0.2);
+            color: #ffd166;
+            border: 1px solid #ffd166;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Voting container */
+        .voting-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .vote-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .vote-count-display {
+            margin-top: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffd166;
+            min-height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    <div id="toast" class="toast"></div>
+    
+    <div id="gameContainer">
+        <div class="game-title">
+            <i class="fas fa-dragon chameleon-icon"></i>
+            <h1>Chameleon Online</h1>
+            <i class="fas fa-dragon chameleon-icon"></i>
+        </div>
+
+        <div id="menu">
+            <div class="card">
+                <h2>Join Game</h2>
+                <input id="usernameInput" placeholder="Enter your username"/>
+                <input id="roomInput" placeholder="Room ID (create or join)"/>
+                <div class="button-container">
+                    <button id="createRoomBtn">
+                        <i class="fas fa-plus"></i> Create Room
+                    </button>
+                    <button id="joinRoomBtn">
+                        <i class="fas fa-sign-in-alt"></i> Join Room
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="lobbyBox">
+            <div class="card">
+                <h2><i class="fas fa-users"></i> Lobby</h2>
+                <div id="playerList"></div>
+                <div id="waitingMsg"></div>
+                <button id="startGameBtn" style="display:none;">
+                    <i class="fas fa-play"></i> Start Game
+                </button>
+                <button id="leaveLobbyBtn">
+                    <i class="fas fa-sign-out-alt"></i> Leave Lobby
+                </button>
+            </div>
+        </div>
+
+        <div id="gameScreen">
+            <div class="card">
+                <h2><i class="fas fa-gamepad"></i> Game Started</h2>
+                <div id="secretEl"></div>
+                <button id="revealRoleBtn">
+                    <i class="fas fa-eye"></i> Toggle Role Blur
+                </button>
+                <div id="turnStatusEl"></div>
+                <div id="clueBoardArea"></div>
+                <div id="votesContainer" style="display:none;"></div>
+                <div id="voteResultEl"></div>
+                <div id="clueInputWrapper">
+                    <input id="clueInput" placeholder="Waiting for your turn..."/>
+                    <button id="submitClueBtn">
+                        <i class="fas fa-paper-plane"></i> Submit Clue
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="oneMoreRoundContainer">
+            <div class="card">
+                <h2><i class="fas fa-vote-yea"></i> All clues are in!</h2>
+                <p>Not enough evidence? Vote for one more round of clues.</p>
+                <div id="oneMoreRoundTally" style="color: #ffd166; margin: 10px 0; font-size: 1.1em;">(0/0 votes)</div>
+                <div class="button-container">
+                    <button id="oneMoreRoundBtn">
+                        <i class="fas fa-redo"></i> Vote: One More Round
+                    </button>
+                    <button id="proceedToVoteBtn" style="background:#ff4444;color:white;">
+                        <i class="fas fa-vote-yea"></i> Vote: Proceed to Final Vote
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chameleonGuessScreen">
+            <div class="card">
+                <h2 id="guessTitle"><i class="fas fa-search"></i> You've been caught!</h2>
+                <div id="guessWaitingMessage" style="display:none;">
+                    <div class="loading-dots">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                    <p>Waiting for the Chameleon to make their final guess...</p>
+                </div>
+                <div id="guessInputWrapper" style="display:none;">
+                    <p>Guess the secret word to steal the win!</p>
+                    <input id="chameleonGuessInput" placeholder="Enter the secret word"/>
+                    <button id="submitGuessBtn">
+                        <i class="fas fa-check"></i> Submit Guess
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="winScreen">
+            <div class="card">
+                <h2 id="winTitle"></h2>
+                <div id="winMessage"></div>
+                <div id="winButtons">
+                    <button id="playAgainBtn" style="display:none;">
+                        <i class="fas fa-redo"></i> Play Again (Host)
+                    </button>
+                    <button id="backToLobbyBtn">
+                        <i class="fas fa-home"></i> Back to Lobby
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" style="display:none; text-align:center; margin:20px 0;">
+            <div class="loading-dots">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <p style="margin-top:10px;">Loading...</p>
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, remove, update, push, onDisconnect } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js';
+
+        // ------------------------------
+        // FIREBASE CONFIG
+        // ------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3KXgr4opL_TaLeyqsLnPIbrsqPDbA92E",
+            authDomain: "chameleononline.firebaseapp.com",
+            projectId: "chameleononline",
+            storageBucket: "chameleononline.firebasestorage.app",
+            messagingSenderId: "13499633727",
+            appId: "1:13499633727:web:e8d60793bfc51815ae288a",
+            measurementId: "G-SZNHGEY175",
+            databaseURL: "https://chameleononline-default-rtdb.firebaseio.com/" 
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ------------------------------
+        // GLOBAL VARIABLES
+        // ------------------------------
+        let username='', roomId='', isHost=false;
+        let playersRef, statusRef;
+        let myRole='', myWord='';
+        let turnOrderUnsubscribe = null, secretUnsubscribe = null, voteButtonsUnsubscribe = null, voteCountsUnsubscribe = null, roundVoteUnsubscribe = null, statusUnsubscribe = null, playersUnsubscribe = null;
+
+        // UI Elements
+        const usernameInput=document.getElementById('usernameInput');
+        const roomInput=document.getElementById('roomInput');
+        const createRoomBtn=document.getElementById('createRoomBtn');
+        const joinRoomBtn=document.getElementById('joinRoomBtn');
+        const lobbyBox=document.getElementById('lobbyBox');
+        const playerList=document.getElementById('playerList');
+        const waitingMsg=document.getElementById('waitingMsg');
+        const startGameBtn=document.getElementById('startGameBtn');
+        const leaveLobbyBtn=document.getElementById('leaveLobbyBtn');
+        const menu=document.getElementById('menu');
+        const gameScreen=document.getElementById('gameScreen');
+        const secretEl=document.getElementById('secretEl');
+        const turnStatusEl=document.getElementById('turnStatusEl');
+        const votesContainer=document.getElementById('votesContainer');
+        const voteResultEl=document.getElementById('voteResultEl');
+        const clueBoardArea=document.getElementById('clueBoardArea');
+        const clueInputWrapper=document.getElementById('clueInputWrapper');
+        const clueInput=document.getElementById('clueInput');
+        const submitClueBtn=document.getElementById('submitClueBtn');
+        const revealRoleBtn=document.getElementById('revealRoleBtn');
+        const particleCanvas=document.getElementById('particleCanvas');
+        const ctx=particleCanvas.getContext('2d');
+
+        // Win Screen Elements
+        const winScreen = document.getElementById('winScreen');
+        const winTitle = document.getElementById('winTitle');
+        const winMessage = document.getElementById('winMessage');
+        const playAgainBtn=document.getElementById('playAgainBtn');
+        const backToLobbyBtn=document.getElementById('backToLobbyBtn');
+
+        // Chameleon Guess Screen Elements
+        const chameleonGuessScreen = document.getElementById('chameleonGuessScreen');
+        const guessTitle = document.getElementById('guessTitle');
+        const guessWaitingMessage = document.getElementById('guessWaitingMessage');
+        const guessInputWrapper = document.getElementById('guessInputWrapper');
+        const chameleonGuessInput = document.getElementById('chameleonGuessInput');
+        const submitGuessBtn = document.getElementById('submitGuessBtn');
+
+        // One More Round Screen Elements
+        const oneMoreRoundContainer = document.getElementById('oneMoreRoundContainer');
+        const oneMoreRoundTally = document.getElementById('oneMoreRoundTally');
+        const oneMoreRoundBtn = document.getElementById('oneMoreRoundBtn');
+        const proceedToVoteBtn = document.getElementById('proceedToVoteBtn');
+
+        // Loading indicator
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // ------------------------------
+        // --- WORD CATEGORIES ---
+        // ------------------------------
+        const CATEGORIES = [
+            { name: "Movies", words: ["Star Wars", "Titanic", "The Matrix", "Jaws", "Jurassic Park", "Avatar", "Frozen", "Inception", "The Godfather", "Pulp Fiction", "Gladiator", "Interstellar", "Parasite", "Joker", "Black Panther", "Mad Max", "Alien", "Back to the Future", "Toy Story", "Spirited Away", "The Shining", "Finding Nemo", "Forrest Gump", "The Lion King", "Seven", "Whiplash", "La La Land", "Get Out", "Blade Runner", "Coco"] },
+            { name: "Animals", words: ["Lion", "Elephant", "Penguin", "Shark", "Kangaroo", "Dolphin", "Zebra", "Giraffe", "Crocodile", "Butterfly", "Tiger", "Bear", "Wolf", "Hippo", "Gorilla", "Monkey", "Koala", "Panda", "Sloth", "Snake", "Lizard", "Frog", "Eagle", "Owl", "Parrot", "Peacock", "Octopus", "Jellyfish", "Starfish", "Cheetah"] },
+            { name: "Fruits", words: ["Apple", "Banana", "Strawberry", "Orange", "Grape", "Watermelon", "Pineapple", "Mango", "Kiwi", "Peach", "Pear", "Cherry", "Plum", "Blueberry", "Raspberry", "Avocado", "Coconut", "Lemon", "Lime", "Pomegranate", "Fig", "Grapefruit", "Apricot", "Blackberry", "Cantaloupe", "Cranberry", "Dragonfruit", "Guava", "Papaya", "Passionfruit"] },
+            { name: "Vegetables", words: ["Carrot", "Broccoli", "Tomato", "Potato", "Onion", "Cucumber", "Lettuce", "Mushroom", "Pepper", "Garlic", "Spinach", "Corn", "Peas", "Celery", "Asparagus", "Cauliflower", "Zucchini", "Eggplant", "Cabbage", "Pumpkin", "Beetroot", "Radish", "Artichoke", "Leek", "Okra", "Sweet Potato", "Turnip", "Kale", "Brussels Sprouts", "Beans"] },
+            { name: "Countries", words: ["USA", "China", "Brazil", "Egypt", "Japan", "Australia", "France", "Mexico", "India", "Canada", "Russia", "Germany", "UK", "Italy", "Spain", "Argentina", "South Korea", "Nigeria", "Turkey", "Saudi Arabia", "South Africa", "Indonesia", "Pakistan", "Thailand", "Greece", "Vietnam", "Peru", "Chile", "Colombia", "New Zealand"] },
+            { name: "Occupations", words: ["Doctor", "Teacher", "Firefighter", "Chef", "Artist", "Pilot", "Police", "Engineer", "Farmer", "Musician", "Scientist", "Writer", "Actor", "Lawyer", "Judge", "Nurse", "Dentist", "Architect", "Mechanic", "Electrician", "Plumber", "Accountant", "Designer", "Photographer", "Journalist", "Baker", "Butcher", "Tailor", "Soldier", "Librarian"] },
+            { name: "Sports", words: ["Soccer", "Basketball", "Tennis", "Baseball", "Golf", "Swimming", "Volleyball", "Hockey", "Cricket", "Rugby", "Football", "Boxing", "MMA", "Skiing", "Snowboarding", "Surfing", "Skateboarding", "Cycling", "Running", "Archery", "Fencing", "Gymnastics", "Wrestling", "Badminton", "Table Tennis", "Formula 1", "Sailing", "Climbing", "Polo", "Karate"] },
+            { name: "Musical Instruments", words: ["Guitar", "Piano", "Drums", "Violin", "Trumpet", "Flute", "Saxophone", "Harp", "Cello", "Clarinet", "Ukulele", "Banjo", "Accordion", "Trombone", "Tuba", "French Horn", "Oboe", "Bassoon", "Xylophone", "Marimba", "Vibraphone", "Bagpipes", "Didgeridoo", "Sitar", "Mandolin", "Harmonica", "Bongos", "Congas", "Triangle", "Tambourine"] },
+            { name: "Kitchen Appliances", words: ["Microwave", "Blender", "Toaster", "Refrigerator", "Oven", "Dishwasher", "Kettle", "Mixer", "Coffee Maker", "Waffle Iron", "Rice Cooker", "Slow Cooker", "Air Fryer", "Food Processor", "Juicer", "Pressure Cooker", "Stand Mixer", "Grill", "Can Opener", "Electric Skillet", "Popcorn Maker", "Ice Cream Maker", "Bread Maker", "Deep Fryer", "Hand Mixer", "Immersion Blender", "Range Hood", "Scale", "Water Filter", "Garbage Disposal"] },
+            { name: "School Subjects", words: ["Math", "Science", "History", "English", "Art", "Music", "Geography", "Physics", "Chemistry", "Biology", "Literature", "P.E.", "Computer Science", "Spanish", "French", "German", "Economics", "Psychology", "Sociology", "Philosophy", "Statistics", "Calculus", "Algebra", "Geometry", "Drama", "Home Economics", "Woodwork", "Metalwork", "Botany", "Astronomy"] },
+            { name: "Clothing", words: ["Shirt", "Pants", "Jacket", "Hat", "Shoes", "Socks", "Dress", "Gloves", "Scarf", "Sweater", "T-Shirt", "Jeans", "Hoodie", "Shorts", "Skirt", "Boots", "Sandals", "Sneakers", "Suit", "Tie", "Belt", "Underwear", "Bikini", "Pajamas", "Robe", "Blouse", "Coat", "Vest", "Leggings", "Raincoat"] },
+            { name: "Furniture", words: ["Chair", "Table", "Sofa", "Bed", "Bookshelf", "Desk", "Dresser", "Lamp", "Cabinet", "Stool", "Couch", "Armchair", "Ottoman", "Nightstand", "Coffee Table", "Dining Table", "Wardrobe", "Bench", "Shelf", "Cupboard", "Sideboard", "Crib", "Bunk Bed", "Hammock", "Bean Bag", "Recliner", "Chaise Lounge", "Headboard", "Footstool", "TV Stand"] },
+            { name: "Vehicles", words: ["Car", "Bicycle", "Airplane", "Train", "Boat", "Motorcycle", "Bus", "Helicopter", "Submarine", "Truck", "Van", "Scooter", "Skateboard", "Rocket", "Spaceship", "Taxi", "Ambulance", "Police Car", "Fire Truck", "Tractor", "Crane", "Bulldozer", "Dump Truck", "Motorhome", "Caravan", "Yacht", "Jet Ski", "Hot Air Balloon", "Blimp", "Gondola"] },
+            { name: "Superheroes", words: ["Superman", "Batman", "Spider-Man", "Wonder Woman", "Iron Man", "Hulk", "Thor", "Captain America", "Black Widow", "Flash", "Green Lantern", "Aquaman", "Wolverine", "Deadpool", "Doctor Strange", "Black Panther", "Ant-Man", "Wasp", "Captain Marvel", "Shazam", "Hawkeye", "Daredevil", "Punisher", "Storm", "Professor X", "Magneto", "Rogue", "Gambit", "Beast", "Cyclops"] },
+            { name: "Famous Landmarks", words: ["Eiffel Tower", "Statue of Liberty", "Great Wall", "Pyramids", "Big Ben", "Taj Mahal", "Colosseum", "Machu Picchu", "Sydney Opera House", "Mount Rushmore", "Christ the Redeemer", "Stonehenge", "Acropolis", "Sagrada Familia", "Leaning Tower", "Burj Khalifa", "Golden Gate", "Mount Fuji", "Angkor Wat", "Petra", "Moai", "Kremlin", "Neuschwanstein", "Louvre", "Forbidden City", "Brandenburg Gate", "Parthenon", "St.Basil's", "Hagia Sophia", "Space Needle"] },
+            { name: "Drinks", words: ["Water", "Coffee", "Tea", "Juice", "Soda", "Milk", "Lemonade", "Smoothie", "Hot Chocolate", "Wine", "Beer", "Whiskey", "Vodka", "Rum", "Gin", "Tequila", "Brandy", "Cocktail", "Mocktail", "Milkshake", "Iced Tea", "Energy Drink", "Coconut Water", "Kombucha", "Sake", "Champagne", "Cider", "Latte", "Espresso", "Mocha"] },
+            { name: "Desserts", words: ["Cake", "Ice Cream", "Cookie", "Pie", "Brownie", "Donut", "Pudding", "Cheesecake", "Mousse", "Cupcake", "Trifle", "Tiramisu", "Macaron", "Eclair", "Gelato", "Sorbet", "Sundae", "Baklava", "Cannoli", "Creme Brulee", "Flan", "Churro", "Apple Crumble", "Fudge", "Meringue", "Panna Cotta", "Jello", "Waffle", "Crepe", "Lava Cake"] },
+            { name: "Weather", words: ["Sun", "Rain", "Snow", "Wind", "Cloud", "Fog", "Storm", "Hail", "Tornado", "Hurricane", "Lightning", "Thunder", "Blizzard", "Drizzle", "Sleet", "Frost", "Dew", "Mist", "Rainbow", "Sunshine", "Overcast", "Breeze", "Gale", "Monsoon", "Typhoon", "Cyclone", "Drought", "Flood", "Heatwave", "Humidity"] },
+            { name: "Body Parts", words: ["Hand", "Foot", "Eye", "Nose", "Mouth", "Ear", "Leg", "Arm", "Brain", "Heart", "Stomach", "Lungs", "Liver", "Kidney", "Skin", "Bone", "Muscle", "Blood", "Vein", "Artery", "Head", "Hair", "Finger", "Toe", "Nail", "Tooth", "Tongue", "Lip", "Eyebrow", "Knee"] },
+            { name: "TV Shows", words: ["Friends", "The Office", "Stranger Things", "Game of Thrones", "Breaking Bad", "The Simpsons", "Squid Game", "Wednesday", "Seinfeld", "Money Heist", "Black Mirror", "The Crown", "Ozark", "Better Call Saul", "The Witcher", "Peaky Blinders", "Westworld", "The Mandalorian", "Ted Lasso", "Sherlock", "Rick and Morty", "South Park", "Family Guy", "The Big Bang", "How I Met", "Lost", "The Sopranos", "The Wire", "Curb", "Survivor"] },
+            { name: "Hobbies", words: ["Reading", "Painting", "Gardening", "Cooking", "Baking", "Hiking", "Camping", "Fishing", "Knitting", "Sewing", "Dancing", "Singing", "Photography", "Gaming", "Yoga", "Meditation", "Origami", "Calligraphy", "Pottery", "Sculpting", "Woodworking", "Birdwatching", "Stargazing", "Collecting", "Volunteering", "Writing", "Blogging", "Podcasting", "Magic", "Juggling"] },
+            { name: "Brands", words: ["Nike", "Apple", "Google", "Amazon", "Microsoft", "Coca-Cola", "Pepsi", "Toyota", "Ford", "Tesla", "Samsung", "Sony", "LG", "McDonald's", "Starbucks", "Disney", "Netflix", "Facebook", "IKEA", "Adidas", "Puma", "Gucci", "Rolex", "LEGO", "Honda", "BMW", "Mercedes", "Audi", "Intel", "IBM"] },
+            { name: "Board Games", words: ["Monopoly", "Chess", "Checkers", "Scrabble", "Clue", "Risk", "Catan", "Ticket to Ride", "Cards Against", "Pandemic", "Codenames", "Gloomhaven", "Wingspan", "Terraforming", "Azul", "Carcassonne", "Dominion", "7 Wonders", "Connect Four", "Battleship", "Sorry!", "Trouble", "Twister", "Jenga", "Pictionary", "Trivial Pursuit", "Backgammon", "Go", "Othello", "Sequence"] },
+            { name: "Mythical Creatures", words: ["Dragon", "Unicorn", "Griffin", "Phoenix", "Centaur", "Minotaur", "Pegasus", "Hydra", "Mermaid", "Gorgon", "Cyclops", "Cerberus", "Chimera", "Sasquatch", "Leprechaun", "Gnome", "Fairy", "Elf", "Dwarf", "Troll", "Goblin", "Orc", "Kraken", "Siren", "Werewolf", "Vampire", "Zombie", "Ghost", "Banshee", "Manticore"] },
+            { name: "Holidays", words: ["Christmas", "Halloween", "Thanksgiving", "Easter", "New Year's", "Valentine's", "St. Patrick's", "Hanukkah", "Diwali", "Ramadan", "Passover", "Kwanzaa", "Oktoberfest", "Mardi Gras", "April Fools'", "Mother's Day", "Father's Day", "Independence", "Labor Day", "Memorial Day", "Boxing Day", "Cinco de Mayo", "Lunar New Year", "Groundhog Day", "Earth Day", "Festivus", "Guy Fawkes", "Veterans Day", "Presidents' Day", "Carnival"] },
+            { name: "Websites & Apps", words: ["Google", "Facebook", "YouTube", "Twitter", "Instagram", "TikTok", "WhatsApp", "Reddit", "Amazon", "Netflix", "Spotify", "LinkedIn", "Pinterest", "Snapchat", "Twitch", "Discord", "eBay", "Wikipedia", "Zoom", "Uber", "Airbnb", "Tinder", "Slack", "Microsoft Teams", "Gmail", "Google Maps", "Waze", "PayPal", "Venmo", "Shopify"] },
+            { name: "Emotions", words: ["Happy", "Sad", "Angry", "Fear", "Surprise", "Disgust", "Joy", "Love", "Hate", "Anxiety", "Calm", "Excited", "Bored", "Shame", "Guilt", "Pride", "Envy", "Jealousy", "Hope", "Grief", "Awe", "Confusion", "Curiosity", "Embarrassment", "Frustration", "Gratitude", "Loneliness", "Nostalgia", "Relief", "Sympathy"] },
+            { name: "Flowers", words: ["Rose", "Tulip", "Sunflower", "Daisy", "Lily", "Orchid", "Daffodil", "Marigold", "Zinnia", "Poppy", "Peony", "Iris", "Hyacinth", "Crocus", "Carnation", "Gerbera", "Lavender", "Violet", "Jasmine", "Lotus", "Hibiscus", "Dandelion", "Magnolia", "Lilac", "Aster", "Begonia", "Chrysanthemum", "Pansy", "Petunia", "Snapdragon"] },
+            { name: "Trees", words: ["Oak", "Pine", "Maple", "Birch", "Willow", "Cherry", "Apple", "Palm", "Redwood", "Sequoia", "Spruce", "Fir", "Cedar", "Cypress", "Elm", "Ash", "Beech", "Poplar", "Sycamore", "Walnut", "Chestnut", "Hickory", "Juniper", "Magnolia", "Baobab", "Eucalyptus", "Jacaranda", "Olive", "Pear", "Bonsai"] },
+            { name: "Space", words: ["Sun", "Moon", "Star", "Planet", "Comet", "Asteroid", "Meteor", "Galaxy", "Nebula", "Black Hole", "Earth", "Mars", "Jupiter", "Saturn", "Venus", "Mercury", "Uranus", "Neptune", "Pluto", "Rocket", "Spaceship", "Astronaut", "Alien", "Orbit", "Gravity", "Eclipse", "Supernova", "Constellation", "Milky Way", "Big Bang"] }
+        ];
+
+        // ------------------------------
+        // PARTICLE ENGINE
+        // ------------------------------
+        let particles=[];
+        
+        function createParticles(x,y,color,count){
+            for(let i=0;i<count;i++){
+                particles.push({x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-1.5)*6,alpha:1,color,size:Math.random()*3+2});
+            }
+        }
+        
+        function updateParticles(){
+            ctx.clearRect(0,0,particleCanvas.width,particleCanvas.height);
+            for(let i=particles.length-1;i>=0;i--){
+                const p=particles[i];
+                ctx.globalAlpha=p.alpha;
+                ctx.fillStyle=p.color;
+                ctx.beginPath();
+                ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+                ctx.fill();
+                ctx.globalAlpha=1;
+                p.x+=p.vx; p.y+=p.vy; p.vy+=0.08;
+                p.alpha-=0.015;
+                if(p.alpha<=0) particles.splice(i,1);
+            }
+            requestAnimationFrame(updateParticles);
+        }
+        
+        updateParticles();
+        
+        window.addEventListener('resize',()=>{
+            particleCanvas.width=window.innerWidth; 
+            particleCanvas.height=window.innerHeight;
+        });
+        
+        particleCanvas.width=window.innerWidth; 
+        particleCanvas.height=window.innerHeight;
+
+        // ------------------------------
+        // UI ENHANCEMENTS
+        // ------------------------------
+        
+        // Toast notification system
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+        
+        // Simulate progress bar for loading
+        function simulateProgress() {
+            const progressBar = document.querySelector('.progress-bar-fill');
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                } else {
+                    width += Math.random() * 10;
+                    progressBar.style.width = Math.min(width, 100) + '%';
+                }
+            }, 200);
+        }
+        
+        // Add visual feedback to buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // Add ripple effect
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size/2;
+                    const y = e.clientY - rect.top - size/2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(255, 255, 255, 0.5);
+                        transform: scale(0);
+                        animation: ripple-animation 0.6s linear;
+                        width: ${size}px;
+                        height: ${size}px;
+                        left: ${x}px;
+                        top: ${y}px;
+                        pointer-events: none;
+                    `;
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // Add keyframe for ripple animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes ripple-animation {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+
+        // ------------------------------
+        // LOBBY & LEAVE FUNCTIONS
+        // ------------------------------
+        function showLoading() {
+            loadingIndicator.style.display = 'block';
+            simulateProgress();
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+            document.querySelector('.progress-bar-fill').style.width = '0%';
+        }
+
+        function stopAllListeners() {
+            if(playersUnsubscribe) playersUnsubscribe();
+            if(statusUnsubscribe) statusUnsubscribe();
+            if(secretUnsubscribe) secretUnsubscribe();
+            if(turnOrderUnsubscribe) turnOrderUnsubscribe();
+            if(voteButtonsUnsubscribe) voteButtonsUnsubscribe();
+            if(voteCountsUnsubscribe) voteCountsUnsubscribe();
+            if(roundVoteUnsubscribe) roundVoteUnsubscribe();
+        }
+
+        function stopGameListeners() {
+            if(secretUnsubscribe) secretUnsubscribe();
+            if(turnOrderUnsubscribe) turnOrderUnsubscribe();
+            if(voteButtonsUnsubscribe) voteButtonsUnsubscribe();
+            if(voteCountsUnsubscribe) voteCountsUnsubscribe();
+            if(roundVoteUnsubscribe) roundVoteUnsubscribe();
+        }
+
+        async function smartLeave() {
+            if (!roomId || !username) return;
+            
+            const playerRef = ref(db, `rooms/${roomId}/players/${username}`);
+            await onDisconnect(playerRef).cancel(); 
+            
+            stopAllListeners();
+            
+            const currentPlayersRef = ref(db, `rooms/${roomId}/players`);
+            const playersSnap = await get(currentPlayersRef);
+            const players = playersSnap.val() || {};
+            const playerCount = Object.keys(players).length;
+
+            if (playerCount <= 1 && players[username]) {
+                await remove(ref(db, 'rooms/' + roomId));
+            } else {
+                await remove(ref(db, `rooms/${roomId}/players/${username}`));
+            }
+            roomId = ''; isHost = false;
+        }
+
+        // NEW "OVERWRITE EMPTY ROOM" LOGIC
+        createRoomBtn.onclick=async()=>{
+            username=usernameInput.value.trim(); roomId=roomInput.value.trim();
+            if(!username||!roomId) {
+                showToast('Enter username and room ID', 2000);
+                return;
+            }
+            
+            showLoading();
+            
+            const roomRef=ref(db,'rooms/'+roomId);
+            const roomSnap = await get(roomRef);
+
+            if(roomSnap.exists()) {
+                // Room exists, check if it's empty
+                const roomData = roomSnap.val();
+                // Check if players node exists and has keys.
+                if (roomData.players && Object.keys(roomData.players).length > 0) {
+                    // Room is not empty, block creation
+                    hideLoading();
+                    showToast('Room exists and is not empty', 2000);
+                    return;
+                }
+                // Room exists but is empty (no players). We can overwrite it.
+                console.log("Overwriting empty room.");
+            }
+            
+            // Proceed with creating/overwriting the room
+            await set(roomRef,{host:username,players:{[username]:true},status:'waiting'});
+            isHost=true;
+            
+            const playerRef = ref(db, `rooms/${roomId}/players/${username}`);
+            await onDisconnect(playerRef).remove();
+            
+            hideLoading();
+            openLobby();
+        };
+
+        joinRoomBtn.onclick=async()=>{
+            username=usernameInput.value.trim(); roomId=roomInput.value.trim();
+            if(!username||!roomId) {
+                showToast('Enter username and room ID', 2000);
+                return;
+            }
+            
+            showLoading();
+            
+            const roomRef=ref(db,'rooms/'+roomId);
+            if(!(await get(roomRef)).exists()) {
+                hideLoading();
+                showToast('Room not found', 2000);
+                return;
+            }
+            
+            // NEW: Check if room is full or in-game
+            const roomData = (await get(roomRef)).val();
+            if (roomData.status !== 'waiting') {
+                hideLoading();
+                showToast('Game is already in progress.', 2000);
+                return;
+            }
+            
+            await set(ref(db,`rooms/${roomId}/players/${username}`),true);
+            isHost = false;
+
+            const playerRef = ref(db, `rooms/${roomId}/players/${username}`);
+            await onDisconnect(playerRef).remove();
+            
+            hideLoading();
+            openLobby();
+        };
+
+        function openLobby(){
+            menu.style.display='none';
+            lobbyBox.style.display='block'; 
+            setTimeout(() => lobbyBox.classList.add('show'), 10);
+            
+            if(isHost) startGameBtn.style.display='inline-block';
+            
+            playersRef=ref(db,`rooms/${roomId}/players`); 
+            statusRef=ref(db,`rooms/${roomId}/status`);
+            
+            playersUnsubscribe = onValue(playersRef,snap=>{
+                playerList.innerHTML='';
+                if(!snap.exists()) {
+                    lobbyBox.style.display='none'; menu.style.display='block';
+                    if (roomId) { 
+                        showToast("The room has been closed.", 2000); 
+                        roomId = ''; 
+                    }
+                    return;
+                }
+                const players=Object.keys(snap.val());
+                players.forEach((p, index)=>{
+                    const div=document.createElement('div');
+                    div.textContent=p;
+                    div.className='player';
+                    div.innerHTML = `<span class="status-indicator status-online"></span> ${p}`;
+                    playerList.appendChild(div);
+                    setTimeout(()=>div.classList.add('show'),50 * index);
+                });
+                waitingMsg.textContent=players.length<2?'Waiting for players…':`${players.length} players in room.`;
+            });
+            
+            // This listener now handles all game states
+            statusUnsubscribe = onValue(statusRef,async (snap)=>{
+                if(!snap.exists()) return;
+                const status = snap.val();
+                
+                // Hide all intermediate screens by default
+                gameScreen.style.display='none';
+                chameleonGuessScreen.style.display='none';
+                oneMoreRoundContainer.style.display='none';
+                winScreen.style.display='none';
+                lobbyBox.style.display='none';
+                // Remove 'show' class to reset animations
+                gameScreen.classList.remove('show');
+                chameleonGuessScreen.classList.remove('show');
+                oneMoreRoundContainer.classList.remove('show');
+                winScreen.classList.remove('show');
+                lobbyBox.classList.remove('show');
+
+                if(status ==='started') {
+                    await startGame(); // This will reset UI and start listeners
+                    gameScreen.style.display='block';
+                    setTimeout(() => gameScreen.classList.add('show'), 10);
+                    clueInputWrapper.style.display = 'block';
+                    votesContainer.style.display = 'none';
+                    
+                } else if (status === 'waiting') {
+                    lobbyBox.style.display='block';
+                    setTimeout(() => lobbyBox.classList.add('show'), 10);
+                    if(isHost) startGameBtn.style.display='inline-block';
+                
+                } else if (status === 'roundVoting') {
+                    gameScreen.style.display='block'; // Show game screen to see clues
+                    setTimeout(() => gameScreen.classList.add('show'), 10);
+                    clueInputWrapper.style.display = 'none'; // But hide input
+                    oneMoreRoundContainer.style.display = 'block';
+                    setTimeout(() => oneMoreRoundContainer.classList.add('show'), 10);
+                    watchRoundVote();
+
+                } else if (status === 'finalVoting') {
+                    gameScreen.style.display='block'; // Show game screen to see clues
+                    setTimeout(() => gameScreen.classList.add('show'), 10);
+                    clueInputWrapper.style.display = 'none'; // Hide input
+                    votesContainer.style.display = 'block'; // Show player votes
+                    watchPlayersForVoteButtons(); // Creates buttons
+                    watchVotes(); // Watches for vote tally & majority
+
+                } else if (status === 'chameleonGuess') {
+                    const roomSnap = await get(ref(db, `rooms/${roomId}`));
+                    const roomData = roomSnap.val();
+                    if (!roomData || !roomData.votedOutPlayer) return;
+
+                    const chameleonWhoIsGuessing = roomData.votedOutPlayer;
+                    
+                    chameleonGuessScreen.style.display = 'block';
+                    setTimeout(() => chameleonGuessScreen.classList.add('show'), 10);
+
+                    if (username === chameleonWhoIsGuessing) {
+                        guessTitle.textContent = "You've been caught!";
+                        guessWaitingMessage.style.display = 'none';
+                        guessInputWrapper.style.display = 'block';
+                    } else {
+                        guessTitle.textContent = `${chameleonWhoIsGuessing} is the Chameleon!`;
+                        guessWaitingMessage.style.display = 'block';
+                        guessInputWrapper.style.display = 'none';
+                    }
+
+                } else if (status === 'ended') {
+                    const roomSnap = await get(ref(db, `rooms/${roomId}`));
+                    const room = roomSnap.val();
+                    if (!room || !room.winner) return;
+                    stopGameListeners();
+                    
+                    winScreen.style.display = 'block';
+                    setTimeout(() => winScreen.classList.add('show'), 10);
+                    showWinScreen(room.winner, room.chameleon, room.word);
+                }
+            });
+        }
+
+        startGameBtn.onclick=async()=>{
+            if(!isHost) return; 
+            showLoading();
+            await update(ref(db,`rooms/${roomId}`),{status:'started'});
+            hideLoading();
+        };
+
+        leaveLobbyBtn.onclick = async () => {
+            await smartLeave();
+            lobbyBox.style.display = 'none';
+            lobbyBox.classList.remove('show');
+            menu.style.display = 'block';
+            showToast('Left the lobby', 1500);
+        };
+
+        backToLobbyBtn.onclick = async () => {
+            winScreen.style.display = 'none';
+            winScreen.classList.remove('show');
+            
+            if (isHost) {
+                await update(ref(db, `rooms/${roomId}`), { status: 'waiting' });
+            }
+            
+            await smartLeave(); 
+            menu.style.display = 'block';
+            showToast('Returned to menu', 1500);
+        };
+
+        // ------------------------------
+        // GAME FUNCTIONS
+        // ------------------------------
+        function resetGameUI() {
+            clueBoardArea.innerHTML = '';
+            voteResultEl.innerHTML = '';
+            votesContainer.innerHTML = '';
+            votesContainer.style.display = 'none';
+            clueInputWrapper.style.display = 'block';
+            clueInput.disabled = true;
+            submitClueBtn.disabled = true;
+            winScreen.style.display = 'none';
+            winScreen.classList.remove('show');
+            
+            chameleonGuessScreen.style.display = 'none';
+            chameleonGuessScreen.classList.remove('show');
+            chameleonGuessInput.value = '';
+            chameleonGuessInput.disabled = false;
+            submitGuessBtn.disabled = false;
+            
+            oneMoreRoundContainer.style.display = 'none';
+            oneMoreRoundContainer.classList.remove('show');
+            oneMoreRoundTally.textContent = '';
+            oneMoreRoundBtn.disabled = false;
+            proceedToVoteBtn.disabled = false;
+        }
+
+        async function startGame(){
+            resetGameUI();
+            
+            if(isHost) await assignRoles();
+            
+            watchMySecret();
+            watchTurnInfo();
+            
+            showToast('Game started!', 2000);
+            createParticles(
+                gameScreen.offsetLeft + gameScreen.offsetWidth/2,
+                gameScreen.offsetTop + gameScreen.offsetHeight/2,
+                '#00ff99',
+                50
+            );
+        }
+
+        function getRandomDecoys(wordArray, count, excludeWord) {
+            const availableWords = wordArray.filter(w => w !== excludeWord);
+            const shuffled = availableWords.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        async function assignRoles(){
+            if(!isHost) return;
+            const playersObj=(await get(playersRef)).val()||{};
+            const playerNames=Object.keys(playersObj);
+            
+            if (playerNames.length < 2) { 
+                await update(ref(db,`rooms/${roomId}`),{status:'waiting'});
+                return;
+            }
+
+            const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+            const categoryWords = category.words;
+            const word = categoryWords[Math.floor(Math.random() * categoryWords.length)];
+            const chameleon = playerNames[Math.floor(Math.random()*playerNames.length)];
+            const decoys = getRandomDecoys(categoryWords, 23, word); // 23 decoys + 1 word = 24
+            const wordList = [word, ...decoys].sort(() => 0.5 - Math.random());
+            const turnOrder = playerNames.sort(() => 0.5 - Math.random());
+
+            const updates = {};
+            
+            updates[`rooms/${roomId}/chameleon`] = chameleon;
+            updates[`rooms/${roomId}/word`] = word;
+            updates[`rooms/${roomId}/wordList`] = wordList;
+            updates[`rooms/${roomId}/category`] = category.name;
+            updates[`rooms/${roomId}/winner`] = null;
+            updates[`rooms/${roomId}/votedOutPlayer`] = null; // Clear voted out player
+
+            updates[`rooms/${roomId}/votes`] = null;
+            updates[`rooms/${roomId}/roundVote`] = null; // Clear round votes
+            
+            updates[`rooms/${roomId}/turnInfo`] = {
+                turnOrder: turnOrder,
+                currentPlayerIndex: 0,
+                clues: {},
+                category: category.name
+            };
+
+            const secrets = {};
+            for(const p of playerNames){
+                if(p === chameleon) {
+                    secrets[p] = {role:'chameleon', secret:null};
+                } else {
+                    secrets[p] = {role:'citizen', secret:word};
+                }
+            }
+            updates[`rooms/${roomId}/secrets`] = secrets;
+            
+            await update(ref(db), updates);
+        }
+
+
+        function watchMySecret(){
+            secretUnsubscribe = onValue(ref(db,`rooms/${roomId}/secrets/${username}`),async snap=>{
+                if(!snap.exists()){ secretEl.innerHTML='Secret: (round not active)'; return; }
+                const data=snap.val(); 
+                myRole=data.role; 
+                myWord=data.secret||'???';
+
+                const roomSnap = await get(ref(db, `rooms/${roomId}`));
+                const roomData = roomSnap.val() || {};
+                const wordList = roomData.wordList || [];
+                const categoryName = roomData.category || '???'; 
+                
+                // Updated to create <div>s for 3-column layout
+                const wordListHTML = `
+                <div class="word-list-graphic">
+                    <div class="word-list-header">TOP SECRET: Possible Words</div>
+                    <div class="word-list-content">
+                    ${wordList.map(w => `<div>• ${w}</div>`).join('')}
+                    </div>
+                </div>
+                `;
+                
+                if (data.role === 'chameleon') {
+                    secretEl.innerHTML = `
+                    <div class="secret-wrapper">
+                        <strong>Category: ${categoryName}</strong><br> 
+                        <span class="role-name blur-target blur-role">Role: **CHAMELEON**</span>
+                        ${wordListHTML}
+                    </div>
+                    `;
+                } else {
+                    secretEl.innerHTML = `
+                    <div class="secret-wrapper">
+                        <strong>Category: ${categoryName}</strong><br> 
+                        <span class="role-name blur-target blur-role">Role: Citizen</span>
+                        <br>
+                        <span class="role-name blur-target blur-role"><strong>Word: ${data.secret}</strong></span>
+                        ${wordListHTML}
+                    </div>
+                    `;
+                }
+            });
+        }
+
+        revealRoleBtn.onclick=()=>{
+            const elements = secretEl.querySelectorAll('.blur-target'); 
+            elements.forEach(el => {
+                el.classList.toggle('blur-role');
+            });
+            
+            if (revealRoleBtn.innerHTML.includes('fa-eye-slash')) {
+                revealRoleBtn.innerHTML = '<i class="fas fa-eye"></i> Toggle Role Blur';
+            } else {
+                revealRoleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Toggle Role Blur';
+            }
+        }
+
+        function watchTurnInfo() {
+            turnOrderUnsubscribe = onValue(ref(db, `rooms/${roomId}/turnInfo`), async (snap) => {
+                if (!snap.exists()) return;
+                let turnInfo = snap.val();
+                const categoryName = turnInfo.category || 'General'; 
+                const turnOrder = turnInfo.turnOrder || [];
+                const index = turnInfo.currentPlayerIndex;
+                const clues = turnInfo.clues || {};
+                
+                clueBoardArea.innerHTML = '<strong>Clue Board:</strong>';
+                turnOrder.forEach(playerName => {
+                    if (clues[playerName]) {
+                        const row = document.createElement('div');
+                        row.className = 'reveal-message';
+                        row.textContent = `${playerName}: ${clues[playerName]}`;
+                        clueBoardArea.appendChild(row);
+                    }
+                });
+
+                // Check if all turns are done
+                if (index >= turnOrder.length) {
+                    turnStatusEl.textContent = `Category: ${categoryName} | All clues are in! Time to vote.`;
+                    clueInputWrapper.style.display = 'none';
+                    clueInput.disabled = true;
+                    submitClueBtn.disabled = true;
+                    
+                    // If all clues are in, trigger the 'roundVoting' status
+                    if (isHost) {
+                        const statusSnap = await get(ref(db, `rooms/${roomId}/status`));
+                        if (statusSnap.val() === 'started') {
+                            await update(ref(db, `rooms/${roomId}`), { status: 'roundVoting' });
+                        }
+                    }
+                } else {
+                    // It's someone's turn
+                    let currentPlayerName = turnOrder[index];
+                    
+                    const playerSnap = await get(ref(db, `rooms/${roomId}/players/${currentPlayerName}`));
+                    if (!playerSnap.exists()) {
+                        if (isHost) {
+                            await update(ref(db, `rooms/${roomId}/turnInfo`), {
+                                currentPlayerIndex: index + 1
+                            });
+                        }
+                        return;
+                    }
+                    
+                    turnStatusEl.textContent = `Category: ${categoryName} | Turn: ${currentPlayerName}`; 
+                    
+                    if (currentPlayerName === username) {
+                        clueInputWrapper.style.display = 'block';
+                        clueInput.placeholder = "It's your turn! Give one word.";
+                        clueInput.disabled = false;
+                        submitClueBtn.disabled = false;
+                    } else {
+                        clueInputWrapper.style.display = 'block';
+                        clueInput.placeholder = "Waiting for other players...";
+                        clueInput.disabled = true;
+                        submitClueBtn.disabled = true;
+                    }
+                }
+            });
+        }
+
+        submitClueBtn.onclick = async () => {
+            const clue = clueInput.value.trim();
+            if (!clue) {
+                showToast("Please enter a clue.", 2000);
+                return;
+            }
+            if (clue.includes(' ')) {
+                showToast("Please submit a SINGLE word.", 2000);
+                return;
+            }
+            
+            clueInput.disabled = true;
+            submitClueBtn.disabled = true;
+            
+            const turnInfoRef = ref(db, `rooms/${roomId}/turnInfo`);
+            const turnInfoSnap = await get(turnInfoRef);
+            const turnInfo = turnInfoSnap.val();
+
+            if (turnInfo.turnOrder[turnInfo.currentPlayerIndex] !== username) return;
+
+            await set(ref(db, `rooms/${roomId}/turnInfo/clues/${username}`), clue);
+            
+            await update(turnInfoRef, {
+                currentPlayerIndex: turnInfo.currentPlayerIndex + 1
+            });
+
+            clueInput.value = '';
+            showToast('Clue submitted!', 1500);
+        };
+        
+        clueInput.addEventListener('keypress',e=>{if(e.key==='Enter')submitClueBtn.click();});
+
+
+        // ------------------------------
+        // "One More Round" Voting
+        // ------------------------------
+        oneMoreRoundBtn.onclick = async () => {
+            await set(ref(db, `rooms/${roomId}/roundVote/${username}`), 'more_round');
+            oneMoreRoundBtn.disabled = true;
+            proceedToVoteBtn.disabled = true;
+            oneMoreRoundBtn.innerHTML = '<i class="fas fa-check"></i> Voted: One More Round';
+            showToast('Voted for one more round', 1500);
+        };
+        
+        proceedToVoteBtn.onclick = async () => {
+            await set(ref(db, `rooms/${roomId}/roundVote/${username}`), 'final_vote');
+            oneMoreRoundBtn.disabled = true;
+            proceedToVoteBtn.disabled = true;
+            proceedToVoteBtn.innerHTML = '<i class="fas fa-check"></i> Voted: Proceed to Vote';
+            showToast('Voted to proceed to final vote', 1500);
+        };
+
+        async function startAnotherRound() {
+            if (!isHost) return;
+            
+            if (roundVoteUnsubscribe) roundVoteUnsubscribe();
+            
+            // Reset clues, index, and round votes, then set status back to 'started'
+            await update(ref(db, `rooms/${roomId}`), {
+                'turnInfo/clues': null,
+                'turnInfo/currentPlayerIndex': 0,
+                'roundVote': null,
+                'status': 'started'
+            });
+        }
+
+        function watchRoundVote() {
+            const roundVoteRef = ref(db, `rooms/${roomId}/roundVote`);
+            roundVoteUnsubscribe = onValue(roundVoteRef, async (snap) => {
+                const votes = snap.val() || {};
+                
+                // Disable buttons if I have already voted
+                if (votes[username]) {
+                    oneMoreRoundBtn.disabled = true;
+                    proceedToVoteBtn.disabled = true;
+                } else {
+                    oneMoreRoundBtn.disabled = false;
+                    proceedToVoteBtn.disabled = false;
+                }
+                
+                const playersSnap = await get(playersRef);
+                const totalPlayers = Object.keys(playersSnap.val() || {}).length;
+                if (totalPlayers === 0) return;
+
+                let votesForRound = 0;
+                let votesForFinal = 0;
+                let totalVotesCast = 0;
+                
+                Object.values(votes).forEach(vote => {
+                    if (vote === 'more_round') votesForRound++;
+                    if (vote === 'final_vote') votesForFinal++;
+                    totalVotesCast++;
+                });
+
+                // Update the live tally
+                oneMoreRoundTally.textContent = `(${votesForRound} for Round) | (${votesForFinal} for Final) -- [${totalVotesCast}/${totalPlayers} voted]`;
+
+                // Check if all votes are in
+                if (totalVotesCast === totalPlayers) {
+                    if (roundVoteUnsubscribe) roundVoteUnsubscribe(); // Stop listening
+                    
+                    if (isHost) {
+                        if (votesForRound > votesForFinal) {
+                            // One More Round wins!
+                            await startAnotherRound();
+                            showToast('Starting another round!', 2000);
+                        } else {
+                            // Proceed to Final Vote wins!
+                            await update(ref(db, `rooms/${roomId}`), { status: 'finalVoting' });
+                            showToast('Time for final voting!', 2000);
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // ------------------------------
+        // FINAL VOTING (for a player) - FIXED VERSION
+        // ------------------------------
+        function watchPlayersForVoteButtons(){
+            voteButtonsUnsubscribe = onValue(playersRef,snap=>{
+                if (!snap.exists()) return;
+                const obj=snap.val()||{}; 
+                votesContainer.innerHTML='<strong>Vote for the Chameleon:</strong>';
+                votesContainer.innerHTML += '<div class="voting-grid"></div>';
+                const votingGrid = votesContainer.querySelector('.voting-grid');
+                
+                Object.keys(obj).forEach(p=>{
+                    if(p===username) return;
+
+                    const voteItem = document.createElement('div');
+                    voteItem.className = 'vote-item';
+                    voteItem.id = `vote-item-${p}`;
+
+                    const b=document.createElement('button');
+                    b.className = 'vote-button';
+                    b.id = `vote-button-${p}`;
+                    b.innerHTML = `Vote ${p} <span class="vote-count" id="vote-count-${p}">0</span>`;
+                    b.onclick=async()=>{
+                        await set(ref(db,`rooms/${roomId}/votes/${username}`),{from:username,to:p});
+                        voteResultEl.textContent = `You voted for ${p}`;
+                        showToast(`You voted for ${p}`, 1500);
+                    };
+
+                    const countDisplay = document.createElement('div');
+                    countDisplay.className = 'vote-count-display';
+                    countDisplay.id = `count-display-${p}`;
+                    countDisplay.textContent = '0 votes';
+
+                    voteItem.appendChild(b);
+                    voteItem.appendChild(countDisplay);
+                    votingGrid.appendChild(voteItem);
+                });
+            });
+        }
+
+        function watchVotes() {
+            const votesRef = ref(db, `rooms/${roomId}/votes`);
+            voteCountsUnsubscribe = onValue(votesRef, async (snap) => {
+                const votes = snap.val() || {};
+                const counts = {};
+                
+                // 1. Calculate counts properly
+                Object.values(votes).forEach(v => {
+                    if (v && v.to) {
+                        counts[v.to] = (counts[v.to] || 0) + 1;
+                    }
+                });
+
+                // 2. Update UI with actual counts
+                const playersSnap = await get(playersRef);
+                const players = playersSnap.val() ? Object.keys(playersSnap.val()) : [];
+
+                players.forEach(p => {
+                    if (p === username) return;
+                    
+                    const countElement = document.getElementById(`vote-count-${p}`);
+                    const countDisplay = document.getElementById(`count-display-${p}`);
+                    const count = counts[p] || 0;
+                    
+                    if (countElement) {
+                        countElement.textContent = count;
+                    }
+                    if (countDisplay) {
+                        countDisplay.textContent = `${count} vote${count !== 1 ? 's' : ''}`;
+                    }
+                });
+
+                // 3. Check for a winner (Majority)
+                const totalPlayers = players.length;
+                if (totalPlayers === 0) return;
+
+                for (const [player, count] of Object.entries(counts)) {
+                    if (count > Math.floor(totalPlayers / 2)) {
+                        // --- MAJORITY REACHED ---
+                        const r = await get(ref(db, `rooms/${roomId}`));
+                        const room = r.val() || {};
+                        
+                        if (room.status === 'ended' || room.status === 'chameleonGuess') return; 
+
+                        const updates = {};
+                        
+                        if (player === room.chameleon) {
+                            // CHAMELEON IS CAUGHT! Trigger final guess.
+                            updates.status = 'chameleonGuess';
+                            updates.votedOutPlayer = player;
+                        } else {
+                            // AN INNOCENT IS VOTED OUT! Chameleon wins.
+                            updates.status = 'ended';
+                            updates.winner = 'Chameleon';
+                            updates.chameleon = room.chameleon;
+                            updates.word = room.word;
+                        }
+                        
+                        await update(ref(db, `rooms/${roomId}`), updates);
+                        return; // Exit
+                    }
+                }
+            });
+        }
+
+        // ------------------------------
+        // CHAMELEON GUESS
+        // ------------------------------
+        submitGuessBtn.onclick = async () => {
+            const guess = chameleonGuessInput.value.trim().toLowerCase();
+            if (!guess) {
+                showToast("You must enter a guess!", 2000);
+                return;
+            }
+
+            submitGuessBtn.disabled = true;
+            chameleonGuessInput.disabled = true;
+
+            // Get the real word to compare
+            const roomSnap = await get(ref(db, `rooms/${roomId}`));
+            const roomData = roomSnap.val();
+            const secretWord = roomData.word;
+            const chameleon = roomData.chameleon;
+
+            let finalWinner;
+            if (guess === secretWord.trim().toLowerCase()) {
+                // Correct! Chameleon wins!
+                finalWinner = 'Chameleon';
+                showToast('Correct guess! Chameleon wins!', 3000);
+            } else {
+                // Wrong! Citizens win!
+                finalWinner = 'Citizens';
+                showToast('Wrong guess! Citizens win!', 3000);
+            }
+
+            // Now, finally end the game
+            await update(ref(db, `rooms/${roomId}`), {
+                status: 'ended',
+                winner: finalWinner,
+                chameleon: chameleon,
+                word: secretWord
+            });
+        };
+
+
+        // ------------------------------
+        // WIN SCREEN & CLEANUP
+        // ------------------------------
+
+        function showWinScreen(winner, chameleon, secretWord) {
+            if (winner === 'Citizens') {
+                winTitle.textContent = '🎉 CITIZENS WIN! 🎉';
+            } else {
+                winTitle.textContent = '🦎 CHAMELEON WINS! 🦎';
+            }
+            winMessage.innerHTML = `The Chameleon was: <strong>${chameleon}</strong><br>The Secret Word was: <strong>${secretWord}</strong>`;
+
+            if(isHost) playAgainBtn.style.display='inline-block';
+            backToLobbyBtn.style.display='inline-block';
+            
+            // Create celebration particles
+            createParticles(
+                winScreen.offsetLeft + winScreen.offsetWidth/2,
+                winScreen.offsetTop + winScreen.offsetHeight/2,
+                winner === 'Citizens' ? '#00ff99' : '#ffd166',
+                100
+            );
+        }
+
+        playAgainBtn.onclick=async()=>{
+            winScreen.style.display = 'none';
+            winScreen.classList.remove('show');
+            // Set status to 'waiting' to clear UI, then 'started' to trigger a new round
+            await update(ref(db,`rooms/${roomId}`),{status:'waiting'});
+            await update(ref(db,`rooms/${roomId}`),{status:'started'});
+        };
+
+        window.addEventListener('beforeunload', async () => {
+            if(roomId && username) {
+                await smartLeave();
+            }
+        });
+
+        // Show a welcome toast
+        setTimeout(() => {
+            showToast('Welcome to Chameleon Online!', 3000);
+        }, 1000);
+
+        console.log('Full Chameleon game loaded! All features active.');
+    </script>
+</body>
+</html>
